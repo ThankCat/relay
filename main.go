@@ -9,9 +9,9 @@ import (
 	"os"
 	"strings"
 
-	"relay/apitype"
 	"relay/channel"
-	"relay/channel/ali"
+	_ "relay/channel/ali"
+	_ "relay/channel/openai"
 	"relay/model"
 )
 
@@ -20,44 +20,13 @@ func main() {
 	message := flag.String("message", "", "发送的消息（单次模式）")
 	stream := flag.Bool("stream", false, "是否流式输出")
 	chat := flag.Bool("chat", false, "交互式对话模式")
-	baseURL := flag.String("base-url", "", "自定义 API 地址（默认 https://api.openai.com）")
+	baseURL := flag.String("base-url", "", "覆盖支持自定义地址的渠道的 API 地址")
 	flag.Parse()
 
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	aliKey := os.Getenv("DASHSCOPE_API_KEY")
-
-	if apiKey == "" && aliKey == "" {
-		fmt.Fprintln(os.Stderr, "错误: 请至少设置 OPENAI_API_KEY 或 DASHSCOPE_API_KEY")
+	channels := buildChannels(*baseURL)
+	if len(channels) == 0 {
+		fmt.Fprintln(os.Stderr, "错误: 未找到任何可用渠道，请设置对应的 API Key 环境变量")
 		os.Exit(1)
-	}
-
-	base := "https://api.openai.com"
-	if *baseURL != "" {
-		base = *baseURL
-	} else if env := os.Getenv("OPENAI_BASE_URL"); env != "" {
-		base = env
-	}
-
-	var channels []*channel.Config
-
-	if apiKey != "" {
-		channels = append(channels, &channel.Config{
-			Name:    "OpenAI",
-			APIType: apitype.OpenAI,
-			BaseURL: base,
-			APIKey:  apiKey,
-			Models:  []string{"*"},
-		})
-	}
-
-	if aliKey != "" {
-		channels = append(channels, &channel.Config{
-			Name:    "Ali",
-			APIType: apitype.Ali,
-			BaseURL: "https://dashscope.aliyuncs.com/compatible-mode",
-			APIKey:  aliKey,
-			Models:  ali.ModelList,
-		})
 	}
 
 	if *chat {
@@ -69,6 +38,32 @@ func main() {
 		fmt.Fprintln(os.Stderr, "\n请指定 -message 或 -chat")
 		os.Exit(1)
 	}
+}
+
+func buildChannels(baseURLOverride string) []*channel.Config {
+	var channels []*channel.Config
+	for _, p := range channel.Providers() {
+		key := os.Getenv(p.EnvKey)
+		if key == "" {
+			continue
+		}
+		base := p.DefaultURL
+		if p.BaseURLEnv != "" {
+			if baseURLOverride != "" {
+				base = baseURLOverride
+			} else if env := os.Getenv(p.BaseURLEnv); env != "" {
+				base = env
+			}
+		}
+		channels = append(channels, &channel.Config{
+			Name:    p.Name,
+			APIType: p.APIType,
+			BaseURL: base,
+			APIKey:  key,
+			Models:  p.Models,
+		})
+	}
+	return channels
 }
 
 func runSingleMessage(channels []*channel.Config, modelName, message string, stream bool) {

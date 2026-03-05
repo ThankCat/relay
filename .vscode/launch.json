@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "千问 - 单次消息",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}",
+            "args": ["-message", "你好，请做个自我介绍", "-model", "qwen-plus"],
+            "env": {
+                "DASHSCOPE_API_KEY": "${env:DASHSCOPE_API_KEY}"
+            }
+        },
+        {
+            "name": "千问 - 单次消息(流式)",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}",
+            "args": ["-message", "你好，请做个自我介绍", "-model", "qwen-plus", "-stream"],
+            "env": {
+                "DASHSCOPE_API_KEY": "${env:DASHSCOPE_API_KEY}"
+            }
+        },
+        {
+            "name": "千问 - 交互式对话",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}",
+            "args": ["-chat", "-model", "qwen-plus"],
+            "console": "integratedTerminal",
+            "env": {
+                "DASHSCOPE_API_KEY": "${env:DASHSCOPE_API_KEY}"
+            }
+        }
+    ]
+}

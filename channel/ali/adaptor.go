@@ -8,10 +8,22 @@ import (
 	"net/http"
 	"strings"
 
+	"relay/apitype"
 	"relay/channel"
 	"relay/channel/openai"
 	"relay/model"
 )
+
+func init() {
+	channel.Register(channel.Provider{
+		Name:       "Ali",
+		APIType:    apitype.Ali,
+		EnvKey:     "DASHSCOPE_API_KEY",
+		DefaultURL: "https://dashscope.aliyuncs.com/compatible-mode",
+		Models:     ModelList,
+		NewAdaptor: func() channel.Adaptor { return &Adaptor{} },
+	})
+}
 
 type Adaptor struct {
 	meta *channel.Meta

@@ -7,23 +7,9 @@ import (
 	"fmt"
 	"io"
 
-	"relay/apitype"
 	"relay/channel"
-	"relay/channel/ali"
-	"relay/channel/openai"
 	"relay/model"
 )
-
-// GetAdaptor 根据 API 类型返回对应的适配器实例。
-func GetAdaptor(apiType int) channel.Adaptor {
-	switch apiType {
-	case apitype.OpenAI:
-		return &openai.Adaptor{}
-	case apitype.Ali:
-		return &ali.Adaptor{}
-	}
-	return nil
-}
 
 // Relay 根据请求的模型名选择渠道，将请求转发到上游并将响应写入 output。
 func Relay(ctx context.Context, channels []*channel.Config, req *model.ChatRequest, output io.Writer) (*model.Usage, error) {
@@ -34,7 +20,7 @@ func Relay(ctx context.Context, channels []*channel.Config, req *model.ChatReque
 
 	meta := ch.BuildMeta(req.Model, req.Stream)
 
-	adaptor := GetAdaptor(meta.APIType)
+	adaptor := channel.GetAdaptor(meta.APIType)
 	if adaptor == nil {
 		return nil, fmt.Errorf("unsupported api type: %d", meta.APIType)
 	}

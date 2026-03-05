@@ -10,9 +10,22 @@ import (
 	"net/http"
 	"strings"
 
+	"relay/apitype"
 	"relay/channel"
 	"relay/model"
 )
+
+func init() {
+	channel.Register(channel.Provider{
+		Name:       "OpenAI",
+		APIType:    apitype.OpenAI,
+		EnvKey:     "OPENAI_API_KEY",
+		BaseURLEnv: "OPENAI_BASE_URL",
+		DefaultURL: "https://api.openai.com",
+		Models:     ModelList,
+		NewAdaptor: func() channel.Adaptor { return &Adaptor{} },
+	})
+}
 
 type Adaptor struct {
 	meta *channel.Meta
